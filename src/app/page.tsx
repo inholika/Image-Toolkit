@@ -1,3 +1,26 @@
+import ImageToolkit from '@/components/image-toolkit';
+import { Image as ImageIcon } from 'lucide-react';
+
 export default function Home() {
-  return <></>;
+  return (
+    <div className="flex flex-col h-[100dvh] bg-background">
+      <header className="sticky top-0 z-30 flex-shrink-0 border-b bg-background/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/10 text-primary p-2 rounded-lg">
+                <ImageIcon className="h-6 w-6" />
+              </div>
+              <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                Image Toolkit
+              </h1>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main className="flex-1 overflow-hidden">
+        <ImageToolkit />
+      </main>
+    </div>
+  );
 }

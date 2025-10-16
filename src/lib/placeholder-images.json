@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "image-toolkit-placeholder",
+      "description": "Placeholder for image upload area",
+      "imageUrl": "https://picsum.photos/seed/placeholder/1024/768",
+      "imageHint": "abstract pattern"
+    }
+  ]
 }
