@@ -378,9 +378,9 @@ export default function ImageToolkit() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
             <div className="flex flex-col gap-2 h-full">
               <h3 className="font-bold text-lg text-center">Original</h3>
-              {imagePreview && <Image src={imagePreview} alt="Original preview" width={originalDimensions?.width} height={originalDimensions?.height} className="w-full h-auto object-contain max-h-[calc(100vh-18rem)] rounded-lg border bg-muted/20" />}
+              {imagePreview && originalDimensions && <Image src={imagePreview} alt="Original preview" width={originalDimensions.width} height={originalDimensions.height} className="w-full h-auto object-contain max-h-[calc(100vh-18rem)] rounded-lg border bg-muted/20" />}
               <div className="text-sm text-muted-foreground text-center">
-                {originalDimensions?.width}x{originalDimensions?.height} - {formatBytes(file.size)}
+                {originalDimensions?.width}x{originalDimensions?.height} - {file.size ? formatBytes(file.size) : ''}
               </div>
             </div>
             <div className="flex flex-col gap-2 h-full">
