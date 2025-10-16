@@ -28,7 +28,7 @@ const formSchema = z.object({
   width: z.number().positive().min(1),
   height: z.number().positive().min(1),
   keepAspectRatio: z.boolean().default(true),
-  format: z.enum(['jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff']).default('jpeg'),
+  format: z.enum(['jpeg', 'jpg', 'png', 'webp', 'gif', 'bmp', 'tiff']).default('jpeg'),
   quality: z.number().min(0).max(100).default(90),
   targetSize: z.number().min(1).optional(),
   aiFeatures: z.array(z.string()).default([]),
@@ -160,8 +160,9 @@ export default function ImageToolkit() {
       ctx.putImageData(imageData, 0, 0);
     }
 
-    const mimeType = `image/${values.format}`;
-    const quality = values.format === 'png' ? undefined : values.quality / 100;
+    const format = values.format === 'jpg' ? 'jpeg' : values.format;
+    const mimeType = `image/${format}`;
+    const quality = format === 'png' ? undefined : values.quality / 100;
     
     canvas.toBlob(
       (blob) => {
@@ -297,6 +298,7 @@ export default function ImageToolkit() {
                                 </FormControl>
                                 <SelectContent>
                                     <SelectItem value="jpeg">JPEG</SelectItem>
+                                    <SelectItem value="jpg">JPG</SelectItem>
                                     <SelectItem value="png">PNG</SelectItem>
                                     <SelectItem value="webp">WEBP</SelectItem>
                                     <SelectItem value="gif">GIF</SelectItem>
