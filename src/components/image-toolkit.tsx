@@ -28,7 +28,7 @@ const formSchema = z.object({
   width: z.number().positive().min(1),
   height: z.number().positive().min(1),
   keepAspectRatio: z.boolean().default(true),
-  format: z.enum(['jpeg', 'png', 'webp']).default('jpeg'),
+  format: z.enum(['jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff']).default('jpeg'),
   quality: z.number().min(0).max(100).default(90),
   targetSize: z.number().min(1).optional(),
   aiFeatures: z.array(z.string()).default([]),
@@ -299,6 +299,9 @@ export default function ImageToolkit() {
                                     <SelectItem value="jpeg">JPEG</SelectItem>
                                     <SelectItem value="png">PNG</SelectItem>
                                     <SelectItem value="webp">WEBP</SelectItem>
+                                    <SelectItem value="gif">GIF</SelectItem>
+                                    <SelectItem value="bmp">BMP</SelectItem>
+                                    <SelectItem value="tiff">TIFF</SelectItem>
                                 </SelectContent>
                             </Select>
                         </FormItem>
