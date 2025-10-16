@@ -4,7 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Download, Image as ImageIcon, Loader2, Lock, Sparkles, Unlock, UploadCloud } from 'lucide-react';
 import Image from 'next/image';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -190,13 +190,22 @@ export default function ImageToolkit() {
   }, [form, originalDimensions]);
 
 
+  const memoizedFormValues = useMemo(() => watchedValues, [
+      watchedValues.width,
+      watchedValues.height,
+      watchedValues.keepAspectRatio,
+      watchedValues.format,
+      watchedValues.quality,
+      JSON.stringify(watchedValues.aiFeatures)
+  ]);
+
   useEffect(() => {
     if (!file) return;
     const debouncedProcessing = setTimeout(() => {
-      processImage(watchedValues);
+        processImage(memoizedFormValues);
     }, 500);
     return () => clearTimeout(debouncedProcessing);
-  }, [watchedValues, file, processImage]);
+  }, [memoizedFormValues, file, processImage]);
 
   const handleDownload = () => {
     if (!processedImage) return;
@@ -380,7 +389,7 @@ export default function ImageToolkit() {
               <h3 className="font-bold text-lg text-center">Original</h3>
               {imagePreview && originalDimensions && <Image src={imagePreview} alt="Original preview" width={originalDimensions.width} height={originalDimensions.height} className="w-full h-auto object-contain max-h-[calc(100vh-18rem)] rounded-lg border bg-muted/20" />}
               <div className="text-sm text-muted-foreground text-center">
-                {originalDimensions?.width}x{originalDimensions?.height} - {file.size ? formatBytes(file.size) : ''}
+                {originalDimensions && file.size ? `${originalDimensions.width}x${originalDimensions.height} - ${formatBytes(file.size)}` : ''}
               </div>
             </div>
             <div className="flex flex-col gap-2 h-full">
