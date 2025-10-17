@@ -243,22 +243,9 @@ export default function ImageToolkit() {
             }
         }
       }
-       if (name === 'keepAspectRatio' && crop && imgRef.current) {
-         if (values.keepAspectRatio && values.width && values.height) {
-            const newCrop = makeAspectCrop(
-              crop,
-              values.width / values.height,
-              imgRef.current.width,
-              imgRef.current.height
-            );
-            setCrop(newCrop);
-         } else {
-            setCrop(c => c ? {...c, aspect: undefined} : undefined)
-         }
-       }
     });
     return () => subscription.unsubscribe();
-  }, [form, originalDimensions, crop]);
+  }, [form, originalDimensions]);
 
 
   const memoizedFormValues = useMemo(() => watchedValues, [
@@ -475,7 +462,7 @@ export default function ImageToolkit() {
                       crop={crop}
                       onChange={(_, percentCrop) => setCrop(percentCrop)}
                       onComplete={(c) => setCompletedCrop(c)}
-                      aspect={watchedValues.keepAspectRatio && watchedValues.width && watchedValues.height ? watchedValues.width / watchedValues.height : undefined}
+                      aspect={undefined}
                       disabled={!watchedValues.cropEnabled}
                       className="max-h-full"
                     >
