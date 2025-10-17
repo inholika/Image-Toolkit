@@ -2,7 +2,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Download, Image as ImageIcon, Loader2, Lock, Sparkles, Unlock, UploadCloud } from 'lucide-react';
+import { Crop, Download, Image as ImageIcon, Loader2, Lock, Sparkles, Unlock, UploadCloud } from 'lucide-react';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
@@ -32,6 +33,11 @@ const formSchema = z.object({
   quality: z.number().min(0).max(100).default(90),
   targetSize: z.number().min(1).optional(),
   aiFeatures: z.array(z.string()).default([]),
+  cropEnabled: z.boolean().default(false),
+  cropX: z.number().min(0).optional(),
+  cropY: z.number().min(0).optional(),
+  cropWidth: z.number().positive().min(1).optional(),
+  cropHeight: z.number().positive().min(1).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -65,6 +71,7 @@ export default function ImageToolkit() {
       format: 'jpeg',
       quality: 90,
       aiFeatures: [],
+      cropEnabled: false,
     },
   });
 
@@ -90,11 +97,16 @@ export default function ImageToolkit() {
 
     const img = new window.Image();
     img.onload = () => {
-      setOriginalDimensions({ width: img.width, height: img.height });
+      const { width, height } = img;
+      setOriginalDimensions({ width, height });
       form.reset({
         ...form.getValues(),
-        width: img.width,
-        height: img.height,
+        width: width,
+        height: height,
+        cropX: 0,
+        cropY: 0,
+        cropWidth: width,
+        cropHeight: height,
       });
     };
     img.src = url;
@@ -118,7 +130,7 @@ export default function ImageToolkit() {
   const watchedValues = form.watch();
 
   const processImage = useCallback(async (values: FormValues) => {
-    if (!file || !canvasRef.current) return;
+    if (!file || !imagePreview || !canvasRef.current) return;
     setIsProcessing(true);
 
     const canvas = canvasRef.current;
@@ -126,13 +138,27 @@ export default function ImageToolkit() {
     if (!ctx) return;
 
     const img = new window.Image();
-    img.src = imagePreview!;
+    img.src = imagePreview;
     await new Promise(resolve => { img.onload = resolve; });
 
     canvas.width = values.width;
     canvas.height = values.height;
 
-    ctx.drawImage(img, 0, 0, values.width, values.height);
+    if (values.cropEnabled && values.cropWidth && values.cropHeight) {
+      ctx.drawImage(
+        img,
+        values.cropX ?? 0,
+        values.cropY ?? 0,
+        values.cropWidth,
+        values.cropHeight,
+        0,
+        0,
+        values.width,
+        values.height
+      );
+    } else {
+      ctx.drawImage(img, 0, 0, values.width, values.height);
+    }
 
     // Apply AI filters
     if (values.aiFeatures.length > 0) {
@@ -180,11 +206,18 @@ export default function ImageToolkit() {
   useEffect(() => {
     const subscription = form.watch((values, { name }) => {
       if (!originalDimensions) return;
-      if (name === 'width' && values.width && values.keepAspectRatio) {
-        form.setValue('height', Math.round((values.width / originalDimensions.width) * originalDimensions.height));
-      }
-      if (name === 'height' && values.height && values.keepAspectRatio) {
-        form.setValue('width', Math.round((values.height / originalDimensions.height) * originalDimensions.width));
+      
+      const isDimensionChange = name === 'width' || name === 'height';
+      const isCropDimensionChange = name === 'cropWidth' || name === 'cropHeight';
+
+      if (values.keepAspectRatio) {
+        if (isDimensionChange && !isCropDimensionChange && values.width && values.height) {
+            if (name === 'width') {
+                form.setValue('height', Math.round((values.width / originalDimensions.width) * originalDimensions.height), { shouldDirty: true });
+            } else if (name === 'height') {
+                form.setValue('width', Math.round((values.height / originalDimensions.height) * originalDimensions.width), { shouldDirty: true });
+            }
+        }
       }
     });
     return () => subscription.unsubscribe();
@@ -197,6 +230,11 @@ export default function ImageToolkit() {
       watchedValues.keepAspectRatio,
       watchedValues.format,
       watchedValues.quality,
+      watchedValues.cropEnabled,
+      watchedValues.cropX,
+      watchedValues.cropY,
+      watchedValues.cropWidth,
+      watchedValues.cropHeight,
       JSON.stringify(watchedValues.aiFeatures)
   ]);
 
@@ -287,6 +325,51 @@ export default function ImageToolkit() {
                     />
                 </div>
                 
+                <div className="space-y-4 rounded-lg border p-4">
+                    <h3 className="text-lg font-medium flex items-center gap-2"><Crop className="w-5 h-5 text-accent"/> Crop</h3>
+                    <FormField control={form.control} name="cropEnabled" render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between">
+                            <FormLabel>Enable Crop</FormLabel>
+                            <FormControl>
+                                <Switch checked={field.value} onCheckedChange={field.onChange} disabled={!file} />
+                            </FormControl>
+                        </FormItem>
+                     )}
+                    />
+                    {watchedValues.cropEnabled && (
+                        <>
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField control={form.control} name="cropX" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>X</FormLabel>
+                                        <FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value) || 0)} disabled={!file} /></FormControl>
+                                    </FormItem>
+                                )} />
+                                <FormField control={form.control} name="cropY" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Y</FormLabel>
+                                        <FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value) || 0)} disabled={!file} /></FormControl>
+                                    </FormItem>
+                                )} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField control={form.control} name="cropWidth" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Width</FormLabel>
+                                        <FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value) || 0)} disabled={!file} /></FormControl>
+                                    </FormItem>
+                                )} />
+                                <FormField control={form.control} name="cropHeight" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Height</FormLabel>
+                                        <FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value) || 0)} disabled={!file} /></FormControl>
+                                    </FormItem>
+                                )} />
+                            </div>
+                        </>
+                    )}
+                </div>
+
                 <div className="space-y-4 rounded-lg border p-4">
                     <h3 className="text-lg font-medium">Format &amp; Quality</h3>
                     <FormField control={form.control} name="format" render={({ field }) => (
@@ -414,3 +497,5 @@ export default function ImageToolkit() {
     </div>
   );
 }
+
+    
