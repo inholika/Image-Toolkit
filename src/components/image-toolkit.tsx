@@ -407,7 +407,6 @@ export default function ImageToolkit() {
                                   <Skeleton className="h-4 w-24" />
                               </div>
                           ))}
-                          {!isLoadingAi && suggestedFeatures.length === 0 && file && <p className="text-sm text-muted-foreground">No specific features suggested.</p>}
                           {!file && <p className="text-sm text-muted-foreground">Upload an image to get AI suggestions.</p>}
                           {suggestedFeatures.map((feature) => {
                             const isAvailable = Object.keys(availableAiFeatures).includes(feature);
@@ -509,3 +508,5 @@ export default function ImageToolkit() {
     </div>
   );
 }
+
+    
