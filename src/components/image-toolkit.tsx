@@ -7,6 +7,9 @@ import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import ReactCrop, { type Crop as CropType, centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+
 
 import { suggestImageFeatures } from '@/lib/actions';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -34,10 +37,6 @@ const formSchema = z.object({
   targetSize: z.number().min(1).optional(),
   aiFeatures: z.array(z.string()).default([]),
   cropEnabled: z.boolean().default(false),
-  cropX: z.number().min(0).optional(),
-  cropY: z.number().min(0).optional(),
-  cropWidth: z.number().positive().min(1).optional(),
-  cropHeight: z.number().positive().min(1).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -59,6 +58,10 @@ export default function ImageToolkit() {
   const [suggestedFeatures, setSuggestedFeatures] = useState<string[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  const [crop, setCrop] = useState<CropType>();
+  const [completedCrop, setCompletedCrop] = useState<CropType>();
 
   const placeholderImage = PlaceHolderImages.find(p => p.id === 'image-toolkit-placeholder');
 
@@ -90,6 +93,9 @@ export default function ImageToolkit() {
       return;
     }
     setFile(selectedFile);
+    setCompletedCrop(undefined);
+    setCrop(undefined);
+
     const url = URL.createObjectURL(selectedFile);
     setImagePreview(url);
     setProcessedImage(null);
@@ -103,11 +109,24 @@ export default function ImageToolkit() {
         ...form.getValues(),
         width: width,
         height: height,
-        cropX: 0,
-        cropY: 0,
-        cropWidth: width,
-        cropHeight: height,
       });
+
+      const initialCrop = centerCrop(
+        makeAspectCrop(
+          {
+            unit: '%',
+            width: 90,
+          },
+          width / height,
+          width,
+          height
+        ),
+        width,
+        height
+      );
+      setCrop(initialCrop);
+      setCompletedCrop(initialCrop);
+
     };
     img.src = url;
 
@@ -130,27 +149,32 @@ export default function ImageToolkit() {
   const watchedValues = form.watch();
 
   const processImage = useCallback(async (values: FormValues) => {
-    if (!file || !imagePreview || !canvasRef.current) return;
+    if (!imgRef.current || !canvasRef.current || !completedCrop) return;
     setIsProcessing(true);
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const img = new window.Image();
-    img.src = imagePreview;
-    await new Promise(resolve => { img.onload = resolve; });
+    const img = imgRef.current;
+    const scaleX = img.naturalWidth / img.width;
+    const scaleY = img.naturalHeight / img.height;
 
     canvas.width = values.width;
     canvas.height = values.height;
 
-    if (values.cropEnabled && values.cropWidth && values.cropHeight) {
+    if (values.cropEnabled && completedCrop) {
+      const cropX = completedCrop.x * scaleX;
+      const cropY = completedCrop.y * scaleY;
+      const cropWidth = completedCrop.width * scaleX;
+      const cropHeight = completedCrop.height * scaleY;
+
       ctx.drawImage(
         img,
-        values.cropX ?? 0,
-        values.cropY ?? 0,
-        values.cropWidth,
-        values.cropHeight,
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
         0,
         0,
         values.width,
@@ -201,17 +225,16 @@ export default function ImageToolkit() {
       mimeType,
       quality
     );
-  }, [file, imagePreview]);
+  }, [completedCrop]);
 
   useEffect(() => {
     const subscription = form.watch((values, { name }) => {
       if (!originalDimensions) return;
       
       const isDimensionChange = name === 'width' || name === 'height';
-      const isCropDimensionChange = name === 'cropWidth' || name === 'cropHeight';
 
       if (values.keepAspectRatio) {
-        if (isDimensionChange && !isCropDimensionChange && values.width && values.height) {
+        if (isDimensionChange && values.width && values.height) {
             if (name === 'width') {
                 form.setValue('height', Math.round((values.width / originalDimensions.width) * originalDimensions.height), { shouldDirty: true });
             } else if (name === 'height') {
@@ -219,9 +242,22 @@ export default function ImageToolkit() {
             }
         }
       }
+       if (name === 'keepAspectRatio' && crop && imgRef.current) {
+         if (values.keepAspectRatio && values.width && values.height) {
+            const newCrop = makeAspectCrop(
+              crop,
+              values.width / values.height,
+              imgRef.current.width,
+              imgRef.current.height
+            );
+            setCrop(newCrop);
+         } else {
+            setCrop(c => c ? {...c, aspect: undefined} : undefined)
+         }
+       }
     });
     return () => subscription.unsubscribe();
-  }, [form, originalDimensions]);
+  }, [form, originalDimensions, crop]);
 
 
   const memoizedFormValues = useMemo(() => watchedValues, [
@@ -231,10 +267,6 @@ export default function ImageToolkit() {
       watchedValues.format,
       watchedValues.quality,
       watchedValues.cropEnabled,
-      watchedValues.cropX,
-      watchedValues.cropY,
-      watchedValues.cropWidth,
-      watchedValues.cropHeight,
       JSON.stringify(watchedValues.aiFeatures)
   ]);
 
@@ -244,7 +276,7 @@ export default function ImageToolkit() {
         processImage(memoizedFormValues);
     }, 500);
     return () => clearTimeout(debouncedProcessing);
-  }, [memoizedFormValues, file, processImage]);
+  }, [memoizedFormValues, file, processImage, completedCrop]);
 
   const handleDownload = () => {
     if (!processedImage) return;
@@ -336,38 +368,6 @@ export default function ImageToolkit() {
                         </FormItem>
                      )}
                     />
-                    {watchedValues.cropEnabled && (
-                        <>
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField control={form.control} name="cropX" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>X</FormLabel>
-                                        <FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value) || 0)} disabled={!file} /></FormControl>
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="cropY" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Y</FormLabel>
-                                        <FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value) || 0)} disabled={!file} /></FormControl>
-                                    </FormItem>
-                                )} />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField control={form.control} name="cropWidth" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Width</FormLabel>
-                                        <FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value) || 0)} disabled={!file} /></FormControl>
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="cropHeight" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Height</FormLabel>
-                                        <FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value) || 0)} disabled={!file} /></FormControl>
-                                    </FormItem>
-                                )} />
-                            </div>
-                        </>
-                    )}
                 </div>
 
                 <div className="space-y-4 rounded-lg border p-4">
@@ -475,7 +475,36 @@ export default function ImageToolkit() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
             <div className="flex flex-col gap-2 h-full">
               <h3 className="font-bold text-lg text-center">Original</h3>
-              {imagePreview && originalDimensions && <Image src={imagePreview} alt="Original preview" width={originalDimensions.width} height={originalDimensions.height} className="w-full h-auto object-contain max-h-[calc(100vh-18rem)] rounded-lg border bg-muted/20" />}
+              {imagePreview && originalDimensions && (
+                <div className="w-full h-auto object-contain max-h-[calc(100vh-18rem)] rounded-lg border bg-muted/20 flex items-center justify-center">
+                    <ReactCrop
+                      crop={crop}
+                      onChange={(_, percentCrop) => setCrop(percentCrop)}
+                      onComplete={(c) => setCompletedCrop(c)}
+                      aspect={watchedValues.keepAspectRatio ? watchedValues.width / watchedValues.height : undefined}
+                      disabled={!watchedValues.cropEnabled}
+                      className="max-h-full"
+                    >
+                      <Image
+                        ref={imgRef}
+                        src={imagePreview}
+                        alt="Original preview"
+                        width={originalDimensions.width}
+                        height={originalDimensions.height}
+                        className="w-full h-auto object-contain"
+                        onLoad={(e) => {
+                          if (watchedValues.keepAspectRatio) {
+                            const { width, height } = e.currentTarget;
+                            const newCrop = makeAspectCrop(crop!, watchedValues.width/watchedValues.height, width, height)
+                            const centeredCrop = centerCrop(newCrop, width, height)
+                            setCrop(centeredCrop)
+                            setCompletedCrop(centeredCrop)
+                          }
+                        }}
+                      />
+                    </ReactCrop>
+                </div>
+              )}
               <div className="text-sm text-muted-foreground text-center">
                 {originalDimensions && file.size ? `${originalDimensions.width}x${originalDimensions.height} - ${formatBytes(file.size)}` : ''}
               </div>
@@ -497,5 +526,3 @@ export default function ImageToolkit() {
     </div>
   );
 }
-
-    
