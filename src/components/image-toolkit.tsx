@@ -32,7 +32,7 @@ const formSchema = z.object({
   width: z.number().positive().min(1),
   height: z.number().positive().min(1),
   keepAspectRatio: z.boolean().default(true),
-  format: z.enum(['jpeg', 'png', 'webp']).default('jpeg'),
+  format: z.enum(['jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff', 'jpg']).default('jpeg'),
   quality: z.number().min(0).max(100).default(90),
   targetSize: z.number().min(1).optional(),
   aiFeatures: z.array(z.string()).default([]),
@@ -210,9 +210,10 @@ export default function ImageToolkit() {
       ctx.putImageData(imageData, 0, 0);
     }
 
-    const format = values.format;
+    let format = values.format;
+    if (format === 'jpg') format = 'jpeg';
     const mimeType = `image/${format}`;
-    const quality = format === 'png' ? undefined : values.quality / 100;
+    const quality = format === 'png' || format === 'gif' ? undefined : values.quality / 100;
     
     canvas.toBlob(
       (blob) => {
@@ -307,7 +308,7 @@ export default function ImageToolkit() {
   );
 
   return (
-    <div className="grid md:grid-cols-12 gap-6 p-4 sm:p-6 h-full">
+    <div className="grid md:grid-cols-12 gap-6 p-4 sm:p-6 min-h-[calc(100vh-8rem)]">
       <canvas ref={canvasRef} className="hidden" />
       <input type="file" ref={fileInputRef} onChange={(e) => handleFileChange(e.target.files?.[0] || null)} className="hidden" accept="image/*" />
       
@@ -381,13 +382,17 @@ export default function ImageToolkit() {
                                 </FormControl>
                                 <SelectContent>
                                     <SelectItem value="jpeg">JPEG</SelectItem>
+                                    <SelectItem value="jpg">JPG</SelectItem>
                                     <SelectItem value="png">PNG</SelectItem>
                                     <SelectItem value="webp">WEBP</SelectItem>
+                                    <SelectItem value="gif">GIF</SelectItem>
+                                    <SelectItem value="bmp">BMP</SelectItem>
+                                    <SelectItem value="tiff">TIFF</SelectItem>
                                 </SelectContent>
                             </Select>
                         </FormItem>
                     )} />
-                    {watchedValues.format !== 'png' && (
+                    {watchedValues.format !== 'png' && watchedValues.format !== 'gif' && (
                         <FormField control={form.control} name="quality" render={({ field }) => (
                             <FormItem>
                                 <div className="flex justify-between items-baseline">
@@ -465,7 +470,7 @@ export default function ImageToolkit() {
             <div className="flex flex-col gap-2 h-full">
               <h3 className="font-bold text-lg text-center">Original</h3>
               {imagePreview && originalDimensions && (
-                <div className="w-full h-auto object-contain max-h-[calc(100vh-18rem)] rounded-lg border bg-muted/20 flex items-center justify-center">
+                <div className="w-full relative aspect-square max-h-[calc(100vh-20rem)] rounded-lg border bg-muted/20 flex items-center justify-center">
                     <ReactCrop
                       crop={crop}
                       onChange={(_, percentCrop) => setCrop(percentCrop)}
@@ -478,7 +483,7 @@ export default function ImageToolkit() {
                         ref={imgRef}
                         src={imagePreview}
                         alt="Original preview"
-                        className="w-full h-auto object-contain"
+                        className="w-full h-auto object-contain max-h-[calc(100vh-20rem)]"
                         onLoad={(e) => {
                           if (watchedValues.keepAspectRatio && watchedValues.width && watchedValues.height) {
                             const { width, height } = e.currentTarget;
@@ -498,7 +503,7 @@ export default function ImageToolkit() {
             </div>
             <div className="flex flex-col gap-2 h-full">
               <h3 className="font-bold text-lg text-center">Processed</h3>
-              <div className="w-full h-auto min-h-[200px] object-contain flex items-center justify-center max-h-[calc(100vh-18rem)] rounded-lg border bg-muted/20 relative">
+              <div className="w-full relative aspect-square min-h-[200px] flex items-center justify-center max-h-[calc(100vh-20rem)] rounded-lg border bg-muted/20">
                   {isProcessing && <Loader2 className="w-8 h-8 animate-spin text-primary" />}
                   {!isProcessing && processedImage && <Image src={processedImage.url} alt="Processed preview" width={watchedValues.width} height={watchedValues.height} className="w-full h-auto object-contain max-h-full" />}
                   {!isProcessing && !processedImage && <ImageIcon className="w-12 h-12 text-muted-foreground/30"/>}

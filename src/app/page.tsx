@@ -4,7 +4,7 @@ import Footer from '@/components/footer';
 
 export default function Home() {
   return (
-    <div className="flex flex-col h-[100dvh] bg-background">
+    <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-30 flex-shrink-0 border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
@@ -19,7 +19,7 @@ export default function Home() {
           </div>
         </div>
       </header>
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1">
         <ImageToolkit />
       </main>
       <Footer />
