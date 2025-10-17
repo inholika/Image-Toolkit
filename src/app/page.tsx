@@ -1,5 +1,6 @@
 import ImageToolkit from '@/components/image-toolkit';
 import { Image as ImageIcon } from 'lucide-react';
+import Footer from '@/components/footer';
 
 export default function Home() {
   return (
@@ -21,6 +22,7 @@ export default function Home() {
       <main className="flex-1 overflow-hidden">
         <ImageToolkit />
       </main>
+      <Footer />
     </div>
   );
 }
