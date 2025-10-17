@@ -11,7 +11,7 @@ import ReactCrop, { type Crop as CropType, centerCrop, makeAspectCrop } from 're
 import 'react-image-crop/dist/ReactCrop.css';
 
 
-import { suggestImageFeatures } from '@/lib/actions';
+import { suggestImageFeatures } from '@/ai/flows/suggest-image-features';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn, formatBytes } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,7 @@ const formSchema = z.object({
   width: z.number().positive().min(1),
   height: z.number().positive().min(1),
   keepAspectRatio: z.boolean().default(true),
-  format: z.enum(['jpeg', 'jpg', 'png', 'webp', 'gif', 'bmp', 'tiff']).default('jpeg'),
+  format: z.enum(['jpeg', 'png', 'webp']).default('jpeg'),
   quality: z.number().min(0).max(100).default(90),
   targetSize: z.number().min(1).optional(),
   aiFeatures: z.array(z.string()).default([]),
@@ -134,10 +134,10 @@ export default function ImageToolkit() {
       setIsLoadingAi(true);
       const dataUrl = await readFileAsDataUrl(selectedFile);
       const result = await suggestImageFeatures({ photoDataUri: dataUrl });
-      if (result.success && result.data?.suggestedFeatures) {
-        setSuggestedFeatures(result.data.suggestedFeatures);
+      if (result.suggestedFeatures) {
+        setSuggestedFeatures(result.suggestedFeatures);
       } else {
-        toast({ variant: 'destructive', title: 'AI Error', description: result.error });
+        toast({ variant: 'destructive', title: 'AI Error', description: 'Failed to get AI suggestions.' });
       }
     } catch (error) {
       toast({ variant: 'destructive', title: 'AI Error', description: 'Could not get AI suggestions.' });
@@ -149,7 +149,7 @@ export default function ImageToolkit() {
   const watchedValues = form.watch();
 
   const processImage = useCallback(async (values: FormValues) => {
-    if (!imgRef.current || !canvasRef.current || !completedCrop) return;
+    if (!imgRef.current || !canvasRef.current) return;
     setIsProcessing(true);
 
     const canvas = canvasRef.current;
@@ -210,7 +210,7 @@ export default function ImageToolkit() {
       ctx.putImageData(imageData, 0, 0);
     }
 
-    const format = values.format === 'jpg' ? 'jpeg' : values.format;
+    const format = values.format;
     const mimeType = `image/${format}`;
     const quality = format === 'png' ? undefined : values.quality / 100;
     
@@ -236,9 +236,9 @@ export default function ImageToolkit() {
       if (values.keepAspectRatio) {
         if (isDimensionChange && values.width && values.height) {
             if (name === 'width') {
-                form.setValue('height', Math.round((values.width / originalDimensions.width) * originalDimensions.height), { shouldDirty: true });
+                form.setValue('height', Math.round((values.width / originalDimensions.width) * originalDimensions.height), { shouldDirty: true, shouldValidate: true });
             } else if (name === 'height') {
-                form.setValue('width', Math.round((values.height / originalDimensions.height) * originalDimensions.width), { shouldDirty: true });
+                form.setValue('width', Math.round((values.height / originalDimensions.height) * originalDimensions.width), { shouldDirty: true, shouldValidate: true });
             }
         }
       }
@@ -381,12 +381,8 @@ export default function ImageToolkit() {
                                 </FormControl>
                                 <SelectContent>
                                     <SelectItem value="jpeg">JPEG</SelectItem>
-                                    <SelectItem value="jpg">JPG</SelectItem>
                                     <SelectItem value="png">PNG</SelectItem>
                                     <SelectItem value="webp">WEBP</SelectItem>
-                                    <SelectItem value="gif">GIF</SelectItem>
-                                    <SelectItem value="bmp">BMP</SelectItem>
-                                    <SelectItem value="tiff">TIFF</SelectItem>
                                 </SelectContent>
                             </Select>
                         </FormItem>
@@ -458,13 +454,6 @@ export default function ImageToolkit() {
             </Form>
           </CardContent>
         </ScrollArea>
-        <Separator/>
-        <CardFooter className="p-4">
-            <Button onClick={handleDownload} disabled={!processedImage || isProcessing} className="w-full">
-                {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                Download Image
-            </Button>
-        </CardFooter>
       </Card>
       
       <div className="md:col-span-8 lg:col-span-9 h-full">
@@ -481,21 +470,19 @@ export default function ImageToolkit() {
                       crop={crop}
                       onChange={(_, percentCrop) => setCrop(percentCrop)}
                       onComplete={(c) => setCompletedCrop(c)}
-                      aspect={watchedValues.keepAspectRatio ? watchedValues.width / watchedValues.height : undefined}
+                      aspect={watchedValues.keepAspectRatio && watchedValues.width && watchedValues.height ? watchedValues.width / watchedValues.height : undefined}
                       disabled={!watchedValues.cropEnabled}
                       className="max-h-full"
                     >
-                      <Image
+                      <img
                         ref={imgRef}
                         src={imagePreview}
                         alt="Original preview"
-                        width={originalDimensions.width}
-                        height={originalDimensions.height}
                         className="w-full h-auto object-contain"
                         onLoad={(e) => {
-                          if (watchedValues.keepAspectRatio) {
+                          if (watchedValues.keepAspectRatio && watchedValues.width && watchedValues.height) {
                             const { width, height } = e.currentTarget;
-                            const newCrop = makeAspectCrop(crop!, watchedValues.width/watchedValues.height, width, height)
+                            const newCrop = makeAspectCrop(crop || {unit: '%', width: 90}, watchedValues.width/watchedValues.height, width, height)
                             const centeredCrop = centerCrop(newCrop, width, height)
                             setCrop(centeredCrop)
                             setCompletedCrop(centeredCrop)
@@ -505,7 +492,7 @@ export default function ImageToolkit() {
                     </ReactCrop>
                 </div>
               )}
-              <div className="text-sm text-muted-foreground text-center">
+              <div className="text-sm text-muted-foreground text-center mt-2">
                 {originalDimensions && file.size ? `${originalDimensions.width}x${originalDimensions.height} - ${formatBytes(file.size)}` : ''}
               </div>
             </div>
@@ -516,9 +503,13 @@ export default function ImageToolkit() {
                   {!isProcessing && processedImage && <Image src={processedImage.url} alt="Processed preview" width={watchedValues.width} height={watchedValues.height} className="w-full h-auto object-contain max-h-full" />}
                   {!isProcessing && !processedImage && <ImageIcon className="w-12 h-12 text-muted-foreground/30"/>}
               </div>
-              <div className="text-sm text-muted-foreground text-center">
+              <div className="text-sm text-muted-foreground text-center mt-2">
                 {processedImage ? `${watchedValues.width}x${watchedValues.height} - ${formatBytes(processedImage.size)}` : `...`}
               </div>
+              <Button onClick={handleDownload} disabled={!processedImage || isProcessing} className="w-full mt-4">
+                  {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                  Download Image
+              </Button>
             </div>
           </div>
         )}
