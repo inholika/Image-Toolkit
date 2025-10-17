@@ -237,9 +237,15 @@ export default function ImageToolkit() {
       if (values.keepAspectRatio) {
         if (isDimensionChange && values.width && values.height) {
             if (name === 'width') {
-                form.setValue('height', Math.round((values.width / originalDimensions.width) * originalDimensions.height), { shouldDirty: true, shouldValidate: true });
+                const newHeight = Math.round((values.width / originalDimensions.width) * originalDimensions.height);
+                if (form.getValues('height') !== newHeight) {
+                  form.setValue('height', newHeight, { shouldDirty: true, shouldValidate: true });
+                }
             } else if (name === 'height') {
-                form.setValue('width', Math.round((values.height / originalDimensions.height) * originalDimensions.width), { shouldDirty: true, shouldValidate: true });
+                const newWidth = Math.round((values.height / originalDimensions.height) * originalDimensions.width);
+                if (form.getValues('width') !== newWidth) {
+                  form.setValue('width', newWidth, { shouldDirty: true, shouldValidate: true });
+                }
             }
         }
       }
@@ -407,6 +413,9 @@ export default function ImageToolkit() {
                                   <Skeleton className="h-4 w-24" />
                               </div>
                           ))}
+                          {file && !isLoadingAi && suggestedFeatures.length === 0 && (
+                            <p className="text-sm text-muted-foreground">No specific features suggested.</p>
+                          )}
                           {!file && <p className="text-sm text-muted-foreground">Upload an image to get AI suggestions.</p>}
                           {suggestedFeatures.map((feature) => {
                             const isAvailable = Object.keys(availableAiFeatures).includes(feature);
@@ -461,7 +470,7 @@ export default function ImageToolkit() {
                       crop={crop}
                       onChange={(_, percentCrop) => setCrop(percentCrop)}
                       onComplete={(c) => setCompletedCrop(c)}
-                      aspect={undefined}
+                      aspect={watchedValues.keepAspectRatio ? watchedValues.width / watchedValues.height : undefined}
                       disabled={!watchedValues.cropEnabled}
                       className="max-h-full"
                     >
@@ -509,4 +518,5 @@ export default function ImageToolkit() {
   );
 }
 
+    
     
