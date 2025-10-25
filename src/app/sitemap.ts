@@ -7,7 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const postUrls = dummyPosts.map((post) => ({
     url: `${baseUrl}/blog/${post.slug}`,
     lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
+    changeFrequency: 'daily' as const,
     priority: 0.9,
   }));
 
@@ -21,32 +21,32 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: `${baseUrl}/about`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: 'daily',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/blog`,
       lastModified: new Date(),
-      changeFrequency: 'weekly',
+      changeFrequency: 'daily',
       priority: 0.7,
     },
     ...postUrls,
     {
       url: `${baseUrl}/privacy-policy`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: 'daily',
       priority: 0.5,
     },
     {
       url: `${baseUrl}/terms-and-conditions`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: 'daily',
       priority: 0.5,
     },
     {
       url: `${baseUrl}/contact-us`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: 'daily',
       priority: 0.6,
     },
   ];
