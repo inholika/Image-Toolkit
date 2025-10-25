@@ -7,9 +7,18 @@ import Link from 'next/link';
 import Footer from '@/components/footer';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { ImageIcon, Rss, ArrowLeft } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type Props = {
   params: { slug: string };
+};
+
+const founder = {
+    name: 'Mukesh Kumar Yogi',
+    role: 'Founder & Lead Developer',
+    avatar: 'https://picsum.photos/seed/mukesh/100/100',
+    bio: 'Mukesh is the creator of Image Toolkit, driven by a passion for building powerful and easy-to-use tools that are accessible to everyone on the web.',
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -96,6 +105,23 @@ export default function BlogPostPage({ params }: Props) {
             className="prose prose-lg dark:prose-invert max-w-full text-foreground prose-headings:text-foreground prose-a:text-primary prose-strong:text-foreground"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
+
+          <div className="mt-12 pt-8 border-t">
+              <h2 className="text-2xl font-bold mb-4">About the Author</h2>
+              <Card className="max-w-md">
+                <CardContent className="flex items-center gap-6 p-6">
+                    <Avatar className="h-20 w-20">
+                      <AvatarImage src={founder.avatar} alt={founder.name} />
+                      <AvatarFallback>{founder.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-1">
+                        <h3 className="text-xl font-semibold">{founder.name}</h3>
+                        <p className="text-primary font-medium">{founder.role}</p>
+                        <p className="text-sm text-muted-foreground">{founder.bio}</p>
+                    </div>
+                </CardContent>
+              </Card>
+          </div>
         </article>
       </main>
       <Footer />
