@@ -15,6 +15,41 @@ export interface Post {
 
 export const dummyPosts: Post[] = [
   {
+    id: 5,
+    slug: 'how-to-use-image-toolkit',
+    title: 'How to Use Image Toolkit: A Step-by-Step Guide',
+    description: 'Your complete guide to using Image Toolkit. Learn how to upload, resize, crop, convert, and download your images with our free online tool.',
+    author: 'Mukesh Kumar Yogi',
+    date: 'October 26, 2025',
+    imageUrl: 'https://picsum.photos/seed/blog5/1200/800',
+    imageHint: 'step-by-step tutorial',
+    content: `
+      <p>Welcome to Image Toolkit! Whether you're a professional designer or just looking to quickly edit a photo, our tool makes it simple and fast. This guide will walk you through every step of the process.</p>
+      
+      <h3 class="text-2xl font-bold mt-6 mb-4">Step 1: Upload Your Image</h3>
+      <p>Getting started is easy. You have two options for uploading an image:</p>
+      <ul class="list-disc list-inside space-y-2 my-4">
+        <li><strong>Click to Upload:</strong> Click anywhere inside the dashed-line box. This will open your computer's file explorer, where you can select the image you want to edit.</li>
+        <li><strong>Drag and Drop:</strong> Simply drag an image file from a folder on your computer and drop it directly onto the upload area.</li>
+      </ul>
+      <p>Your image will appear instantly in the "Original" preview panel. Because Image Toolkit is a client-side application, your image is never sent to a server, ensuring your data remains completely private.</p>
+      
+      <h3 class="text-2xl font-bold mt-6 mb-4">Step 2: Adjust the Settings</h3>
+      <p>The control panel on the left is where all the magic happens. You can see a live preview of your changes in the "Processed" panel on the right.</p>
+      <ul class="list-disc list-inside space-y-2 my-4">
+        <li><strong>Dimensions:</strong> Enter your desired width and height. You can choose units like pixels (px), inches (in), or centimeters (cm). Toggle the "Keep aspect ratio" lock to prevent your image from being stretched or distorted.</li>
+        <li><strong>Crop:</strong> Enable the "Crop" switch to activate the cropping tool. A selection box will appear on your original image. Drag the handles to select the perfect area, and the processed view will update in real-time.</li>
+        <li><strong>Format:</strong> Use the dropdown menu to convert your image to popular formats like <strong>JPEG, PNG, or WEBP</strong>. This is perfect for optimizing images for the web.</li>
+        <li><strong>AI Suggestions:</strong> Our AI analyzes your photo and suggests creative filters like 'Grayscale' or 'Sepia'. Just check the box next to a suggestion to apply it instantly.</li>
+        <li><strong>Quality:</strong> If you're exporting to JPEG or WEBP, a "Quality" slider will appear. Lower the quality to reduce the file size, or increase it to maintain maximum detail.</li>
+      </ul>
+
+      <h3 class="text-2xl font-bold mt-6 mb-4">Step 3: Download Your Image</h3>
+      <p>Once you are happy with your edits, simply click the <strong>"Download Image"</strong> button. Your newly processed image will be saved directly to your computer's download folder.</p>
+      <p class="mt-4">That's it! In just a few clicks, you have a perfectly edited image ready to be used anywhere. Happy editing!</p>
+    `
+  },
+  {
     id: 4,
     slug: 'image-toolkit-kya-hai',
     title: 'Image Toolkit Kya Hai? (What is Image Toolkit?)',

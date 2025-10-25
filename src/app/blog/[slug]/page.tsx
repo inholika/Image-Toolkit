@@ -30,6 +30,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.description,
+    image: post.imageUrl,
+    author: {
+      '@type': 'Person',
+      name: post.author,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Image Toolkit',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://imagetoolk.netlify.app/og-image.png',
+      },
+    },
+    datePublished: new Date(post.date).toISOString(),
+    dateModified: new Date(post.date).toISOString(),
+  };
+
   return {
     title: `${post.title} - Image Toolkit Blog`,
     description: post.description,
@@ -47,6 +69,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 alt: post.title,
             }
         ]
+    },
+    other: {
+        'script[type="application/ld+json"]': JSON.stringify(structuredData),
     }
   };
 }
@@ -58,8 +83,34 @@ export default function BlogPostPage({ params }: Props) {
     notFound();
   }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.description,
+    image: post.imageUrl,
+    author: {
+      '@type': 'Person',
+      name: post.author,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Image Toolkit',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://imagetoolk.netlify.app/og-image.png',
+      },
+    },
+    datePublished: new Date(post.date).toISOString(),
+    dateModified: new Date(post.date).toISOString(),
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
+      <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
        <header className="sticky top-0 z-30 flex-shrink-0 border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
