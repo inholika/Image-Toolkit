@@ -20,7 +20,7 @@ export const dummyPosts: Post[] = [
     title: 'Image Toolkit Kya Hai? (What is Image Toolkit?)',
     description: 'Image Toolkit ek powerful aur free online tool hai jo aapko aasani se images ko resize, crop, convert, aur enhance karne me madad karta hai. Jaaniye iske features ke baare mein.',
     author: 'Mukesh Kumar Yogi',
-    date: 'October 28, 2023',
+    date: 'October 25, 2025',
     imageUrl: 'https://picsum.photos/seed/blog4/1200/800',
     imageHint: 'image editing software',
     content: `
@@ -44,7 +44,7 @@ export const dummyPosts: Post[] = [
     title: '5 Tips for Optimizing Images for the Web',
     description: 'Learn how to reduce image file sizes without sacrificing quality. Faster loading times are just a few clicks away!',
     author: 'Mukesh Kumar Yogi',
-    date: 'October 26, 2023',
+    date: 'October 25, 2025',
     imageUrl: 'https://picsum.photos/seed/blog1/1200/800',
     imageHint: 'web performance speed',
     content: `
@@ -72,7 +72,7 @@ export const dummyPosts: Post[] = [
     title: 'Understanding Image Formats: JPG, PNG, WEBP, and More',
     description: 'Which image format should you use? This guide breaks down the pros and cons of the most popular formats.',
     author: 'Mukesh Kumar Yogi',
-    date: 'October 22, 2023',
+    date: 'October 25, 2025',
     imageUrl: 'https://picsum.photos/seed/blog2/1200/800',
     imageHint: 'file formats code',
     content: `
@@ -104,7 +104,7 @@ export const dummyPosts: Post[] = [
     title: 'Introducing AI-Powered Feature Suggestions',
     description: 'Discover how our new AI feature can help you find the perfect edits for your photos automatically.',
     author: 'Mukesh Kumar Yogi',
-    date: 'October 18, 2023',
+    date: 'October 25, 2025',
     imageUrl: 'https://picsum.photos/seed/blog3/1200/800',
     imageHint: 'artificial intelligence robot',
     content: `
