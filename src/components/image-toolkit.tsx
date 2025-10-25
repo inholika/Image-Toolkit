@@ -464,7 +464,7 @@ export default function ImageToolkit() {
                               </div>
                           ))}
                           {file && !isLoadingAi && suggestedFeatures.length === 0 && (
-                            <p className="text-sm text-muted-foreground">No specific features suggested.</p>
+                            <p className="text-sm text-muted-foreground">Upload an image to get AI suggestions.</p>
                           )}
                           {!file && <p className="text-sm text-muted-foreground">Upload an image to get AI suggestions.</p>}
                           {suggestedFeatures.map((feature) => {
@@ -590,5 +590,3 @@ export default function ImageToolkit() {
     </div>
   );
 }
-
-    
