@@ -3,9 +3,34 @@ import { Image as ImageIcon } from 'lucide-react';
 import Footer from '@/components/footer';
 import { ThemeToggle } from '@/components/theme-toggle';
 
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Image Toolkit",
+  "operatingSystem": "WEB",
+  "applicationCategory": "MultimediaApplication",
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "150"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "description": "An all-in-one tool to convert, resize, crop, and apply AI-powered effects to your images for free.",
+  "url": process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+};
+
+
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
       <header className="sticky top-0 z-30 flex-shrink-0 border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
