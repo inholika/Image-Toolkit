@@ -28,9 +28,19 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 
+const DPI = 96;
+const units = {
+  px: 1,
+  in: DPI,
+  cm: DPI / 2.54,
+  mm: DPI / 25.4,
+};
+type Unit = keyof typeof units;
+
 const formSchema = z.object({
   width: z.number().positive().min(1),
   height: z.number().positive().min(1),
+  unit: z.enum(['px', 'cm', 'mm', 'in']).default('px'),
   keepAspectRatio: z.boolean().default(true),
   format: z.enum(['jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff', 'jpg']).default('jpeg'),
   quality: z.number().min(0).max(100).default(90),
@@ -70,6 +80,7 @@ export default function ImageToolkit() {
     defaultValues: {
       width: 1920,
       height: 1080,
+      unit: 'px',
       keepAspectRatio: true,
       format: 'jpeg',
       quality: 90,
@@ -77,6 +88,12 @@ export default function ImageToolkit() {
       cropEnabled: false,
     },
   });
+
+  const convertUnits = (value: number, from: Unit, to: Unit) => {
+    if (from === to) return value;
+    const valueInPx = value * units[from];
+    return valueInPx / units[to];
+  };
 
   const readFileAsDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -105,10 +122,15 @@ export default function ImageToolkit() {
     img.onload = () => {
       const { width, height } = img;
       setOriginalDimensions({ width, height });
+      
+      const currentUnit = form.getValues('unit');
+      const widthInCurrentUnit = convertUnits(width, 'px', currentUnit);
+      const heightInCurrentUnit = convertUnits(height, 'px', currentUnit);
+
       form.reset({
         ...form.getValues(),
-        width: width,
-        height: height,
+        width: Math.round(widthInCurrentUnit),
+        height: Math.round(heightInCurrentUnit),
       });
 
       const initialCrop = centerCrop(
@@ -155,13 +177,16 @@ export default function ImageToolkit() {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    
+    const widthInPx = Math.round(convertUnits(values.width, values.unit, 'px'));
+    const heightInPx = Math.round(convertUnits(values.height, values.unit, 'px'));
 
     const img = imgRef.current;
     const scaleX = img.naturalWidth / img.width;
     const scaleY = img.naturalHeight / img.height;
 
-    canvas.width = values.width;
-    canvas.height = values.height;
+    canvas.width = widthInPx;
+    canvas.height = heightInPx;
 
     if (values.cropEnabled && completedCrop) {
       const cropX = completedCrop.x * scaleX;
@@ -177,16 +202,16 @@ export default function ImageToolkit() {
         cropHeight,
         0,
         0,
-        values.width,
-        values.height
+        widthInPx,
+        heightInPx
       );
     } else {
-      ctx.drawImage(img, 0, 0, values.width, values.height);
+      ctx.drawImage(img, 0, 0, widthInPx, heightInPx);
     }
 
     // Apply AI filters
     if (values.aiFeatures.length > 0) {
-      const imageData = ctx.getImageData(0, 0, values.width, values.height);
+      const imageData = ctx.getImageData(0, 0, widthInPx, heightInPx);
       const data = imageData.data;
       for (let i = 0; i < data.length; i += 4) {
         if (values.aiFeatures.includes('Grayscale')) {
@@ -227,25 +252,43 @@ export default function ImageToolkit() {
       quality
     );
   }, [completedCrop]);
+  
+  const oldUnit = useRef<Unit>('px');
 
   useEffect(() => {
     const subscription = form.watch((values, { name }) => {
       if (!originalDimensions) return;
       
+      if (name === 'unit') {
+        const newUnit = values.unit as Unit;
+        const currentWidth = form.getValues('width');
+        const currentHeight = form.getValues('height');
+        
+        const newWidth = convertUnits(currentWidth, oldUnit.current, newUnit);
+        const newHeight = convertUnits(currentHeight, oldUnit.current, newUnit);
+
+        form.setValue('width', Math.round(newWidth), { shouldValidate: true });
+        form.setValue('height', Math.round(newHeight), { shouldValidate: true });
+        
+        oldUnit.current = newUnit;
+        return;
+      }
+
       const isDimensionChange = name === 'width' || name === 'height';
 
-      if (values.keepAspectRatio) {
-        if (isDimensionChange && values.width && values.height) {
-            if (name === 'width') {
-                const newHeight = Math.round((values.width / originalDimensions.width) * originalDimensions.height);
-                if (form.getValues('height') !== newHeight) {
-                  form.setValue('height', newHeight, { shouldDirty: true, shouldValidate: true });
-                }
-            } else if (name === 'height') {
-                const newWidth = Math.round((values.height / originalDimensions.height) * originalDimensions.width);
-                if (form.getValues('width') !== newWidth) {
-                  form.setValue('width', newWidth, { shouldDirty: true, shouldValidate: true });
-                }
+      if (values.keepAspectRatio && isDimensionChange && values.width && values.height) {
+        const originalWidthInUnits = convertUnits(originalDimensions.width, 'px', values.unit as Unit);
+        const originalHeightInUnits = convertUnits(originalDimensions.height, 'px', values.unit as Unit);
+        
+        if (name === 'width') {
+            const newHeight = Math.round((values.width / originalWidthInUnits) * originalHeightInUnits);
+            if (form.getValues('height') !== newHeight) {
+              form.setValue('height', newHeight, { shouldDirty: true, shouldValidate: true });
+            }
+        } else if (name === 'height') {
+            const newWidth = Math.round((values.height / originalHeightInUnits) * originalWidthInUnits);
+            if (form.getValues('width') !== newWidth) {
+              form.setValue('width', newWidth, { shouldDirty: true, shouldValidate: true });
             }
         }
       }
@@ -257,6 +300,7 @@ export default function ImageToolkit() {
   const memoizedFormValues = useMemo(() => watchedValues, [
       watchedValues.width,
       watchedValues.height,
+      watchedValues.unit,
       watchedValues.keepAspectRatio,
       watchedValues.format,
       watchedValues.quality,
@@ -299,13 +343,16 @@ export default function ImageToolkit() {
       <p className="text-muted-foreground/60">PNG, JPG, WEBP, etc.</p>
     </div>
   );
-
+  
+  const processedWidthPx = Math.round(convertUnits(watchedValues.width, watchedValues.unit as Unit, 'px'));
+  const processedHeightPx = Math.round(convertUnits(watchedValues.height, watchedValues.unit as Unit, 'px'));
+  
   return (
     <div className="grid md:grid-cols-12 gap-6 p-4 sm:p-6 min-h-[calc(100vh-8rem)]">
       <canvas ref={canvasRef} className="hidden" />
       <input type="file" ref={fileInputRef} onChange={(e) => handleFileChange(e.target.files?.[0] || null)} className="hidden" accept="image/*" />
       
-      <Card className="md:col-span-4 lg:col-span-3 h-full flex flex-col">
+      <Card className="md:col-span-4 lg:col-span-3 h-full flex flex-col md:order-1 order-2">
         <CardHeader>
           <CardTitle>Controls</CardTitle>
           <CardDescription>Adjust your image settings</CardDescription>
@@ -322,7 +369,7 @@ export default function ImageToolkit() {
                           <FormItem>
                             <FormLabel>Width</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value) || 0)} disabled={!file} />
+                              <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} disabled={!file} />
                             </FormControl>
                           </FormItem>
                         )}
@@ -331,12 +378,28 @@ export default function ImageToolkit() {
                           <FormItem>
                             <FormLabel>Height</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value) || 0)} disabled={!file} />
+                              <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} disabled={!file} />
                             </FormControl>
                           </FormItem>
                         )}
                       />
                     </div>
+                     <FormField control={form.control} name="unit" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Unit</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!file}>
+                                <FormControl>
+                                    <SelectTrigger><SelectValue placeholder="Select a unit" /></SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="px">Pixels (px)</SelectItem>
+                                    <SelectItem value="in">Inches (in)</SelectItem>
+                                    <SelectItem value="cm">Centimeters (cm)</SelectItem>
+                                    <SelectItem value="mm">Millimeters (mm)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </FormItem>
+                     )} />
                      <FormField control={form.control} name="keepAspectRatio" render={({ field }) => (
                         <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                           <FormControl>
@@ -365,7 +428,7 @@ export default function ImageToolkit() {
                 </div>
 
                 <div className="space-y-4 rounded-lg border p-4">
-                    <h3 className="text-lg font-medium">Format &amp; Quality</h3>
+                    <h3 className="text-lg font-medium">Format</h3>
                     <FormField control={form.control} name="format" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Format</FormLabel>
@@ -385,19 +448,6 @@ export default function ImageToolkit() {
                             </Select>
                         </FormItem>
                     )} />
-                    {watchedValues.format !== 'png' && watchedValues.format !== 'gif' && (
-                        <FormField control={form.control} name="quality" render={({ field }) => (
-                            <FormItem>
-                                <div className="flex justify-between items-baseline">
-                                    <FormLabel>Quality</FormLabel>
-                                    <span className="text-sm font-mono text-muted-foreground">{field.value}%</span>
-                                </div>
-                                <FormControl>
-                                    <Slider defaultValue={[field.value]} min={0} max={100} step={1} onValueChange={(vals) => field.onChange(vals[0])} disabled={!file} />
-                                </FormControl>
-                            </FormItem>
-                        )} />
-                    )}
                 </div>
 
                 <div className="space-y-4 rounded-lg border p-4">
@@ -456,7 +506,7 @@ export default function ImageToolkit() {
         </ScrollArea>
       </Card>
       
-      <div className="md:col-span-8 lg:col-span-9 h-full">
+      <div className="md:col-span-8 lg:col-span-9 h-full md:order-2 order-1">
         {!file && (
           <UploadPlaceholder/>
         )}
@@ -482,10 +532,12 @@ export default function ImageToolkit() {
                         onLoad={(e) => {
                           if (watchedValues.keepAspectRatio && watchedValues.width && watchedValues.height) {
                             const { width, height } = e.currentTarget;
-                            const newCrop = makeAspectCrop(crop || {unit: '%', width: 90}, watchedValues.width/watchedValues.height, width, height)
-                            const centeredCrop = centerCrop(newCrop, width, height)
-                            setCrop(centeredCrop)
-                            setCompletedCrop(centeredCrop)
+                            if (width > 0 && height > 0 && watchedValues.width > 0 && watchedValues.height > 0) {
+                              const newCrop = makeAspectCrop(crop || {unit: '%', width: 90}, watchedValues.width/watchedValues.height, width, height)
+                              const centeredCrop = centerCrop(newCrop, width, height)
+                              setCrop(centeredCrop)
+                              setCompletedCrop(centeredCrop)
+                            }
                           }
                         }}
                       />
@@ -493,19 +545,40 @@ export default function ImageToolkit() {
                 </div>
               )}
               <div className="text-sm text-muted-foreground text-center mt-2">
-                {originalDimensions && file.size ? `${originalDimensions.width}x${originalDimensions.height} - ${formatBytes(file.size)}` : ''}
+                {originalDimensions && file.size ? `${originalDimensions.width}x${originalDimensions.height}px - ${formatBytes(file.size)}` : ''}
               </div>
             </div>
             <div className="flex flex-col gap-2 h-full">
               <h3 className="font-bold text-lg text-center">Processed</h3>
               <div className="w-full relative aspect-square min-h-[200px] flex items-center justify-center max-h-[calc(100vh-20rem)] rounded-lg border bg-muted/20">
                   {isProcessing && <Loader2 className="w-8 h-8 animate-spin text-primary" />}
-                  {!isProcessing && processedImage && <Image src={processedImage.url} alt="Processed preview" width={watchedValues.width} height={watchedValues.height} className="w-full h-auto object-contain max-h-full" />}
+                  {!isProcessing && processedImage && <Image src={processedImage.url} alt="Processed preview" width={processedWidthPx} height={processedHeightPx} className="w-full h-auto object-contain max-h-full" />}
                   {!isProcessing && !processedImage && <ImageIcon className="w-12 h-12 text-muted-foreground/30"/>}
               </div>
               <div className="text-sm text-muted-foreground text-center mt-2">
-                {processedImage ? `${watchedValues.width}x${watchedValues.height} - ${formatBytes(processedImage.size)}` : `...`}
+                {processedImage ? `${processedWidthPx}x${processedHeightPx}px - ${formatBytes(processedImage.size)}` : `...`}
               </div>
+              
+              <Form {...form}>
+              <form>
+                {watchedValues.format !== 'png' && watchedValues.format !== 'gif' && file && (
+                  <div className="space-y-2 mt-4">
+                    <FormField control={form.control} name="quality" render={({ field }) => (
+                        <FormItem>
+                            <div className="flex justify-between items-baseline">
+                                <FormLabel>Quality</FormLabel>
+                                <span className="text-sm font-mono text-muted-foreground">{field.value}%</span>
+                            </div>
+                            <FormControl>
+                                <Slider defaultValue={[field.value]} min={0} max={100} step={1} onValueChange={(vals) => field.onChange(vals[0])} disabled={!file} />
+                            </FormControl>
+                        </FormItem>
+                    )} />
+                  </div>
+                )}
+              </form>
+              </Form>
+
               <Button onClick={handleDownload} disabled={!processedImage || isProcessing} className="w-full mt-4">
                   {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                   Download Image
@@ -518,5 +591,4 @@ export default function ImageToolkit() {
   );
 }
 
-    
     
