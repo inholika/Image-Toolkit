@@ -12,6 +12,9 @@ const Footer = () => {
           <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             About Us
           </Link>
+          <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Blog
+          </Link>
           <Link href="/contact-us" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Contact Us
           </Link>
