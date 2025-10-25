@@ -1,3 +1,4 @@
+
 import ImageToolkit from '@/components/image-toolkit';
 import { Image as ImageIcon } from 'lucide-react';
 import Footer from '@/components/footer';
@@ -7,22 +8,49 @@ const BASE_URL = 'https://imagetoolk.netlify.app';
 
 const schema = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "Image Toolkit",
-  "operatingSystem": "WEB",
-  "applicationCategory": "MultimediaApplication",
-  "aggregateRating": {
-    "@type": "AggregateRating",
-    "ratingValue": "4.8",
-    "ratingCount": "150"
-  },
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "USD"
-  },
-  "description": "An all-in-one tool to convert, resize, crop, and apply AI-powered effects to your images for free.",
-  "url": BASE_URL,
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "url": "https://imagetoolk.netlify.app/",
+      "name": "Image Toolkit",
+      "description": "An online image toolkit that allows users to adjust image dimensions, crop, and format settings, with AI-powered suggestions.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://imagetoolk.netlify.app/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "WebPage",
+      "name": "Image Toolkit",
+      "url": "https://imagetoolk.netlify.app/",
+      "description": "Free online image editing tool with resizing, cropping, format conversion, and AI image enhancement features."
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Image Toolkit",
+      "operatingSystem": "Web",
+      "applicationCategory": "MultimediaApplication",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "150"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "A free online tool to edit and optimize images, offering resizing, cropping, and AI-powered enhancements.",
+      "url": "https://imagetoolk.netlify.app/"
+    },
+    {
+      "@type": "Organization",
+      "name": "Image Toolkit",
+      "url": "https://imagetoolk.netlify.app/",
+      "logo": "https://imagetoolk.netlify.app/og-image.png"
+    }
+  ]
 };
 
 
