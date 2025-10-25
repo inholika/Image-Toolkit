@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Footer from '@/components/footer';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { ImageIcon } from 'lucide-react';
+import { ImageIcon, Rss } from 'lucide-react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
@@ -25,7 +25,13 @@ export default function TermsAndConditionsPage() {
                 Image Toolkit
               </h1>
             </Link>
-            <ThemeToggle />
+            <div className="flex items-center gap-4">
+              <Link href="/blog" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <Rss className="h-4 w-4" />
+                <span>Blog</span>
+              </Link>
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </header>

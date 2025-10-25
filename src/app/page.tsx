@@ -1,8 +1,9 @@
 
 import ImageToolkit from '@/components/image-toolkit';
-import { Image as ImageIcon } from 'lucide-react';
+import { Image as ImageIcon, Rss } from 'lucide-react';
 import Footer from '@/components/footer';
 import { ThemeToggle } from '@/components/theme-toggle';
+import Link from 'next/link';
 
 const BASE_URL = 'https://imagetoolk.netlify.app';
 
@@ -65,14 +66,22 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-primary/10 text-primary p-2 rounded-lg">
-                <ImageIcon className="h-6 w-6" />
-              </div>
-              <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-                Image Toolkit
-              </h1>
+              <Link href="/" className="flex items-center gap-3">
+                <div className="bg-primary/10 text-primary p-2 rounded-lg">
+                  <ImageIcon className="h-6 w-6" />
+                </div>
+                <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                  Image Toolkit
+                </h1>
+              </Link>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-4">
+              <Link href="/blog" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <Rss className="h-4 w-4" />
+                <span>Blog</span>
+              </Link>
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </header>

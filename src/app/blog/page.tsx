@@ -56,7 +56,13 @@ export default function BlogPage() {
                 Image Toolkit
               </h1>
             </Link>
-            <ThemeToggle />
+            <div className="flex items-center gap-4">
+              <Link href="/blog" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <Rss className="h-4 w-4" />
+                <span>Blog</span>
+              </Link>
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </header>
