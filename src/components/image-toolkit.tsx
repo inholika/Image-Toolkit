@@ -520,7 +520,7 @@ export default function ImageToolkit() {
                       crop={crop}
                       onChange={(_, percentCrop) => setCrop(percentCrop)}
                       onComplete={(c) => setCompletedCrop(c)}
-                      aspect={watchedValues.keepAspectRatio ? watchedValues.width / watchedValues.height : undefined}
+                      aspect={watchedValues.keepAspectRatio && watchedValues.width && watchedValues.height ? watchedValues.width / watchedValues.height : undefined}
                       disabled={!watchedValues.cropEnabled}
                       className="max-h-full"
                     >
