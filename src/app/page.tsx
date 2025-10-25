@@ -1,6 +1,7 @@
 import ImageToolkit from '@/components/image-toolkit';
 import { Image as ImageIcon } from 'lucide-react';
 import Footer from '@/components/footer';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function Home() {
   return (
@@ -16,6 +17,7 @@ export default function Home() {
                 Image Toolkit
               </h1>
             </div>
+            <ThemeToggle />
           </div>
         </div>
       </header>
