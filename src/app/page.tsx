@@ -3,6 +3,8 @@ import { Image as ImageIcon } from 'lucide-react';
 import Footer from '@/components/footer';
 import { ThemeToggle } from '@/components/theme-toggle';
 
+const BASE_URL = 'https://imagetoolk.netlify.app';
+
 const schema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
@@ -20,7 +22,7 @@ const schema = {
     "priceCurrency": "USD"
   },
   "description": "An all-in-one tool to convert, resize, crop, and apply AI-powered effects to your images for free.",
-  "url": process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+  "url": BASE_URL,
 };
 
 
