@@ -6,50 +6,13 @@ import { ImageIcon, Rss } from 'lucide-react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import Image from 'next/image';
+import { dummyPosts } from '@/lib/posts';
 
 export const metadata: Metadata = {
   title: 'Blog - Image Toolkit',
   description: 'Tips, tutorials, and updates from the Image Toolkit team.',
 };
 
-const dummyPosts = [
-  {
-    id: 4,
-    title: 'Image Toolkit Kya Hai? (What is Image Toolkit?)',
-    description: 'Image Toolkit ek powerful aur free online tool hai jo aapko aasani se images ko resize, crop, convert, aur enhance karne me madad karta hai. Jaaniye iske features ke baare mein.',
-    author: 'Mukesh Kumar Yogi',
-    date: 'October 28, 2023',
-    imageUrl: 'https://picsum.photos/seed/blog4/400/250',
-    imageHint: 'image editing'
-  },
-  {
-    id: 1,
-    title: '5 Tips for Optimizing Images for the Web',
-    description: 'Learn how to reduce image file sizes without sacrificing quality. Faster loading times are just a few clicks away!',
-    author: 'Mukesh Kumar Yogi',
-    date: 'October 26, 2023',
-    imageUrl: 'https://picsum.photos/seed/blog1/400/250',
-    imageHint: 'web performance'
-  },
-  {
-    id: 2,
-    title: 'Understanding Image Formats: JPG, PNG, WEBP, and More',
-    description: 'Which image format should you use? This guide breaks down the pros and cons of the most popular formats.',
-    author: 'Mukesh Kumar Yogi',
-    date: 'October 22, 2023',
-    imageUrl: 'https://picsum.photos/seed/blog2/400/250',
-    imageHint: 'file formats'
-  },
-  {
-    id: 3,
-    title: 'Introducing AI-Powered Feature Suggestions',
-    description: 'Discover how our new AI feature can help you find the perfect edits for your photos automatically.',
-    author: 'Mukesh Kumar Yogi',
-    date: 'October 18, 2023',
-    imageUrl: 'https://picsum.photos/seed/blog3/400/250',
-    imageHint: 'artificial intelligence'
-  },
-];
 
 export default function BlogPage() {
   return (
@@ -87,28 +50,28 @@ export default function BlogPage() {
 
           <div className="grid gap-8">
             {dummyPosts.map((post) => (
-              <Card key={post.id} className="overflow-hidden">
+              <Card key={post.id} className="overflow-hidden group">
                 <div className="grid md:grid-cols-3">
-                    <div className="md:col-span-1">
+                    <div className="md:col-span-1 overflow-hidden">
                          <Image 
                             src={post.imageUrl}
                             alt={post.title}
                             width={400}
                             height={250}
-                            className="object-cover w-full h-full"
+                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                             data-ai-hint={post.imageHint}
                          />
                     </div>
                     <div className="md:col-span-2">
                         <CardHeader>
-                          <CardTitle>{post.title}</CardTitle>
+                          <CardTitle className="group-hover:text-primary transition-colors"><Link href={`/blog/${post.slug}`}>{post.title}</Link></CardTitle>
                            <CardDescription>
                             By {post.author} on {post.date}
                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                           <p className="text-muted-foreground">{post.description}</p>
-                          <Link href="#" className="text-primary font-semibold mt-4 inline-block hover:underline">
+                          <Link href={`/blog/${post.slug}`} className="text-primary font-semibold mt-4 inline-block hover:underline">
                             Read More &rarr;
                           </Link>
                         </CardContent>
