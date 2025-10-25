@@ -14,6 +14,15 @@ export const metadata: Metadata = {
 
 const dummyPosts = [
   {
+    id: 4,
+    title: 'Image Toolkit Kya Hai? (What is Image Toolkit?)',
+    description: 'Image Toolkit ek powerful aur free online tool hai jo aapko aasani se images ko resize, crop, convert, aur enhance karne me madad karta hai. Jaaniye iske features ke baare mein.',
+    author: 'Mukesh Kumar Yogi',
+    date: 'October 28, 2023',
+    imageUrl: 'https://picsum.photos/seed/blog4/400/250',
+    imageHint: 'image editing'
+  },
+  {
     id: 1,
     title: '5 Tips for Optimizing Images for the Web',
     description: 'Learn how to reduce image file sizes without sacrificing quality. Faster loading times are just a few clicks away!',
@@ -57,7 +66,7 @@ export default function BlogPage() {
               </h1>
             </Link>
             <div className="flex items-center gap-4">
-              <Link href="/blog" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              <Link href="/blog" className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-foreground transition-colors">
                 <Rss className="h-4 w-4" />
                 <span>Blog</span>
               </Link>
