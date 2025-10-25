@@ -107,7 +107,6 @@ export default function BlogPostPage({ params }: Props) {
           />
 
           <div className="mt-12 pt-8 border-t">
-              <h2 className="text-2xl font-bold mb-4">About the Author</h2>
               <Card className="bg-muted/50 border-none">
                 <CardContent className="flex items-center gap-6 p-6">
                     <Avatar className="h-20 w-20">
