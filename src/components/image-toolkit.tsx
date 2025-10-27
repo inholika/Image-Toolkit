@@ -28,19 +28,13 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 
-const DPI = 96;
-const units = {
-  px: 1,
-  in: DPI,
-  cm: DPI / 2.54,
-  mm: DPI / 25.4,
-};
-type Unit = keyof typeof units;
+type Unit = 'px' | 'in' | 'cm' | 'mm';
 
 const formSchema = z.object({
   width: z.number().positive().min(1),
   height: z.number().positive().min(1),
   unit: z.enum(['px', 'cm', 'mm', 'in']).default('px'),
+  dpi: z.number().positive().min(1).default(96),
   keepAspectRatio: z.boolean().default(true),
   format: z.enum(['jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff', 'jpg']).default('jpeg'),
   quality: z.number().min(0).max(100).default(90),
@@ -81,6 +75,7 @@ export default function ImageToolkit() {
       width: 1920,
       height: 1080,
       unit: 'px',
+      dpi: 96,
       keepAspectRatio: true,
       format: 'jpeg',
       quality: 90,
@@ -89,8 +84,16 @@ export default function ImageToolkit() {
     },
   });
 
-  const convertUnits = (value: number, from: Unit, to: Unit) => {
+  const getUnits = (dpi: number) => ({
+    px: 1,
+    in: dpi,
+    cm: dpi / 2.54,
+    mm: dpi / 25.4,
+  });
+
+  const convertUnits = (value: number, from: Unit, to: Unit, dpi: number) => {
     if (from === to) return value;
+    const units = getUnits(dpi);
     const valueInPx = value * units[from];
     return valueInPx / units[to];
   };
@@ -124,8 +127,9 @@ export default function ImageToolkit() {
       setOriginalDimensions({ width, height });
       
       const currentUnit = form.getValues('unit');
-      const widthInCurrentUnit = convertUnits(width, 'px', currentUnit);
-      const heightInCurrentUnit = convertUnits(height, 'px', currentUnit);
+      const currentDpi = form.getValues('dpi');
+      const widthInCurrentUnit = convertUnits(width, 'px', currentUnit, currentDpi);
+      const heightInCurrentUnit = convertUnits(height, 'px', currentUnit, currentDpi);
 
       form.reset({
         ...form.getValues(),
@@ -178,8 +182,8 @@ export default function ImageToolkit() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    const widthInPx = Math.round(convertUnits(values.width, values.unit, 'px'));
-    const heightInPx = Math.round(convertUnits(values.height, values.unit, 'px'));
+    const widthInPx = Math.round(convertUnits(values.width, values.unit, 'px', values.dpi));
+    const heightInPx = Math.round(convertUnits(values.height, values.unit, 'px', values.dpi));
 
     const img = imgRef.current;
     const scaleX = img.naturalWidth / img.width;
@@ -254,31 +258,42 @@ export default function ImageToolkit() {
   }, [completedCrop]);
   
   const oldUnit = useRef<Unit>('px');
+  const oldDpi = useRef<number>(96);
 
   useEffect(() => {
     const subscription = form.watch((values, { name }) => {
       if (!originalDimensions) return;
       
-      if (name === 'unit') {
+      const isUnitChange = name === 'unit';
+      const isDpiChange = name === 'dpi';
+
+      if (isUnitChange || isDpiChange) {
         const newUnit = values.unit as Unit;
+        const newDpi = values.dpi || 96;
         const currentWidth = form.getValues('width');
         const currentHeight = form.getValues('height');
         
-        const newWidth = convertUnits(currentWidth, oldUnit.current, newUnit);
-        const newHeight = convertUnits(currentHeight, oldUnit.current, newUnit);
+        const widthInPx = currentWidth * getUnits(oldDpi.current)[oldUnit.current];
+        const newWidth = widthInPx / getUnits(newDpi)[newUnit];
+        
+        const heightInPx = currentHeight * getUnits(oldDpi.current)[oldUnit.current];
+        const newHeight = heightInPx / getUnits(newDpi)[newUnit];
 
-        form.setValue('width', Math.round(newWidth), { shouldValidate: true });
-        form.setValue('height', Math.round(newHeight), { shouldValidate: true });
+        if (isUnitChange) {
+          form.setValue('width', Math.round(newWidth), { shouldValidate: true });
+          form.setValue('height', Math.round(newHeight), { shouldValidate: true });
+        }
         
         oldUnit.current = newUnit;
+        oldDpi.current = newDpi;
         return;
       }
 
       const isDimensionChange = name === 'width' || name === 'height';
 
-      if (values.keepAspectRatio && isDimensionChange && values.width && values.height) {
-        const originalWidthInUnits = convertUnits(originalDimensions.width, 'px', values.unit as Unit);
-        const originalHeightInUnits = convertUnits(originalDimensions.height, 'px', values.unit as Unit);
+      if (values.keepAspectRatio && isDimensionChange && values.width && values.height && values.dpi) {
+        const originalWidthInUnits = convertUnits(originalDimensions.width, 'px', values.unit as Unit, values.dpi);
+        const originalHeightInUnits = convertUnits(originalDimensions.height, 'px', values.unit as Unit, values.dpi);
         
         if (name === 'width') {
             const newHeight = Math.round((values.width / originalWidthInUnits) * originalHeightInUnits);
@@ -301,6 +316,7 @@ export default function ImageToolkit() {
       watchedValues.width,
       watchedValues.height,
       watchedValues.unit,
+      watchedValues.dpi,
       watchedValues.keepAspectRatio,
       watchedValues.format,
       watchedValues.quality,
@@ -344,8 +360,8 @@ export default function ImageToolkit() {
     </div>
   );
   
-  const processedWidthPx = Math.round(convertUnits(watchedValues.width, watchedValues.unit as Unit, 'px'));
-  const processedHeightPx = Math.round(convertUnits(watchedValues.height, watchedValues.unit as Unit, 'px'));
+  const processedWidthPx = Math.round(convertUnits(watchedValues.width, watchedValues.unit as Unit, 'px', watchedValues.dpi));
+  const processedHeightPx = Math.round(convertUnits(watchedValues.height, watchedValues.unit as Unit, 'px', watchedValues.dpi));
   
   return (
     <div className="grid md:grid-cols-12 gap-6 p-4 sm:p-6 min-h-[calc(100vh-8rem)]">
@@ -400,6 +416,15 @@ export default function ImageToolkit() {
                             </Select>
                         </FormItem>
                      )} />
+                      <FormField control={form.control} name="dpi" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>DPI (Dots Per Inch)</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} disabled={!file} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
                      <FormField control={form.control} name="keepAspectRatio" render={({ field }) => (
                         <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                           <FormControl>
@@ -590,5 +615,3 @@ export default function ImageToolkit() {
     </div>
   );
 }
-
-    
