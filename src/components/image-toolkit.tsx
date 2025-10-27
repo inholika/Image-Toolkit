@@ -27,6 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { DpiControl } from '@/components/dpi-control';
 
 type Unit = 'px' | 'in' | 'cm' | 'mm';
 
@@ -416,11 +417,18 @@ export default function ImageToolkit() {
                             </Select>
                         </FormItem>
                      )} />
-                      <FormField control={form.control} name="dpi" render={({ field }) => (
+                      <FormField
+                        control={form.control}
+                        name="dpi"
+                        render={({ field }) => (
                           <FormItem>
                             <FormLabel>DPI (Dots Per Inch)</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} disabled={!file} />
+                              <DpiControl
+                                value={field.value}
+                                onChange={field.onChange}
+                                disabled={!file}
+                              />
                             </FormControl>
                           </FormItem>
                         )}
@@ -615,3 +623,5 @@ export default function ImageToolkit() {
     </div>
   );
 }
+
+    
