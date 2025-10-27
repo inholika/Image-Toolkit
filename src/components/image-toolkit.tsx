@@ -264,48 +264,42 @@ export default function ImageToolkit() {
   useEffect(() => {
     const subscription = form.watch((values, { name }) => {
       if (!originalDimensions) return;
-      
-      const isUnitChange = name === 'unit';
-      const isDpiChange = name === 'dpi';
-
-      if (isUnitChange || isDpiChange) {
-        const newUnit = values.unit as Unit;
-        const newDpi = values.dpi || 96;
-        const currentWidth = form.getValues('width');
-        const currentHeight = form.getValues('height');
-        
-        const widthInPx = currentWidth * getUnits(oldDpi.current)[oldUnit.current];
-        const newWidth = widthInPx / getUnits(newDpi)[newUnit];
-        
-        const heightInPx = currentHeight * getUnits(oldDpi.current)[oldUnit.current];
-        const newHeight = heightInPx / getUnits(newDpi)[newUnit];
-
-        if (isUnitChange) {
-          form.setValue('width', Math.round(newWidth), { shouldValidate: true });
-          form.setValue('height', Math.round(newHeight), { shouldValidate: true });
-        }
-        
+  
+      const currentValues = form.getValues();
+      const newUnit = currentValues.unit as Unit;
+      const newDpi = currentValues.dpi || 96;
+  
+      if (name === 'unit' || name === 'dpi') {
+        const { width, height } = currentValues;
+  
+        const widthInPx = convertUnits(width, oldUnit.current, 'px', oldDpi.current);
+        const newWidth = convertUnits(widthInPx, 'px', newUnit, newDpi);
+  
+        const heightInPx = convertUnits(height, oldUnit.current, 'px', oldDpi.current);
+        const newHeight = convertUnits(heightInPx, 'px', newUnit, newDpi);
+  
+        form.setValue('width', Math.round(newWidth), { shouldValidate: true, shouldDirty: true });
+        form.setValue('height', Math.round(newHeight), { shouldValidate: true, shouldDirty: true });
+  
         oldUnit.current = newUnit;
         oldDpi.current = newDpi;
         return;
       }
-
+  
       const isDimensionChange = name === 'width' || name === 'height';
-
-      if (values.keepAspectRatio && isDimensionChange && values.width && values.height && values.dpi) {
-        const originalWidthInUnits = convertUnits(originalDimensions.width, 'px', values.unit as Unit, values.dpi);
-        const originalHeightInUnits = convertUnits(originalDimensions.height, 'px', values.unit as Unit, values.dpi);
+      if (currentValues.keepAspectRatio && isDimensionChange && currentValues.width && currentValues.height) {
+        const aspectRatio = originalDimensions.width / originalDimensions.height;
         
         if (name === 'width') {
-            const newHeight = Math.round((values.width / originalWidthInUnits) * originalHeightInUnits);
-            if (form.getValues('height') !== newHeight) {
-              form.setValue('height', newHeight, { shouldDirty: true, shouldValidate: true });
-            }
+          const newHeight = Math.round(currentValues.width / aspectRatio);
+          if (form.getValues('height') !== newHeight) {
+            form.setValue('height', newHeight, { shouldDirty: true, shouldValidate: true });
+          }
         } else if (name === 'height') {
-            const newWidth = Math.round((values.height / originalHeightInUnits) * originalWidthInUnits);
-            if (form.getValues('width') !== newWidth) {
-              form.setValue('width', newWidth, { shouldDirty: true, shouldValidate: true });
-            }
+          const newWidth = Math.round(currentValues.height * aspectRatio);
+          if (form.getValues('width') !== newWidth) {
+            form.setValue('width', newWidth, { shouldDirty: true, shouldValidate: true });
+          }
         }
       }
     });
@@ -404,7 +398,7 @@ export default function ImageToolkit() {
                      <FormField control={form.control} name="unit" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Unit</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!file}>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={!file}>
                                 <FormControl>
                                     <SelectTrigger><SelectValue placeholder="Select a unit" /></SelectTrigger>
                                 </FormControl>
@@ -430,6 +424,11 @@ export default function ImageToolkit() {
                                 disabled={!file}
                               />
                             </FormControl>
+                            {file && (
+                              <FormMessage className="text-xs text-muted-foreground font-mono">
+                                Output: {processedWidthPx} x {processedHeightPx} px
+                              </FormMessage>
+                            )}
                           </FormItem>
                         )}
                       />
@@ -465,7 +464,7 @@ export default function ImageToolkit() {
                     <FormField control={form.control} name="format" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Format</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!file}>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={!file}>
                                 <FormControl>
                                     <SelectTrigger><SelectValue placeholder="Select a format" /></SelectTrigger>
                                 </FormControl>
