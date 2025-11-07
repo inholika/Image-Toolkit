@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -9,6 +10,9 @@ export const metadata: Metadata = {
   title: 'Image Toolkit - Free Online Image Editor',
   description: 'An all-in-one tool to convert, resize, crop, and apply AI-powered effects to your images for free. Supports JPEG, PNG, WEBP, and more.',
   keywords: ['image editor', 'image converter', 'resize image', 'crop image', 'AI image effects', 'free image tool'],
+  verification: {
+    google: 'b3sR0RVRAR-fGVCbRdHLjUGLMl_p6uUiWodhrQcDx0U',
+  },
   openGraph: {
     title: 'Image Toolkit - Free Online Image Editor',
     description: 'An all-in-one tool to convert, resize, crop, and apply AI-powered effects to your images for free.',
